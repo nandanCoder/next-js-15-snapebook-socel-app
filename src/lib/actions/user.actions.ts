@@ -145,6 +145,11 @@ export async function logout(): Promise<{ error: string }> {
     sessionCookie.value,
     sessionCookie.attributes,
   );
+  await prisma.subscription.deleteMany({
+    where: {
+      userId: session.userId,
+    },
+  });
   return redirect("/login");
 }
 

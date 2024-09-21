@@ -6,11 +6,18 @@ import {
 } from "stream-chat-react";
 import { useSession } from "../SessionProvider";
 import { Button } from "@/components/ui/button";
-import { MailPlus, X } from "lucide-react";
+import { BellOff, BellRing, Loader2, MailPlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 import NewChatDialog from "./NewChatDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  getCurrentPushSubscription,
+  registerPushNotification,
+  sendPushSubscriptionToServer,
+  unregisterPushNotification,
+} from "@/helpers/pushService";
 
 interface ChatSidebarProps {
   open: boolean;
@@ -94,6 +101,7 @@ function MenuHeader({ onClose }: MenuHeaderProps) {
           </Button>
         </div>
         <h1 className="me-auto text-xl font-bold md:ms-2">Messages</h1>
+        <PushSubscriptionToggleButton />
         <Button
           size="icon"
           variant="ghost"
@@ -111,6 +119,90 @@ function MenuHeader({ onClose }: MenuHeaderProps) {
             onClose();
           }}
         />
+      )}
+    </>
+  );
+}
+
+// notification button
+
+function PushSubscriptionToggleButton() {
+  const [hasActivePushSubscription, setHasActivePushSubscription] =
+    useState<boolean>();
+  const [loading, setLoading] = useState<boolean>(false);
+  useEffect(() => {
+    async function getActivePushSubscription() {
+      const subscription = await getCurrentPushSubscription();
+      setHasActivePushSubscription(!!subscription);
+    }
+    getActivePushSubscription();
+  }, []);
+  useEffect(() => {
+    async function syncPushSubscription() {
+      try {
+        const subscription = await getCurrentPushSubscription();
+        if (subscription) {
+          await sendPushSubscriptionToServer(subscription);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    syncPushSubscription();
+  }, []);
+
+  async function setPushNotificationsEnabled(enabled: boolean) {
+    if (loading) return;
+    setLoading(true);
+    try {
+      if (enabled) {
+        await registerPushNotification();
+      } else {
+        await unregisterPushNotification();
+      }
+      toast.message(
+        enabled ? "Push notifications enabled" : "Push notifications disabled",
+      );
+      setHasActivePushSubscription(enabled);
+    } catch (error) {
+      console.error(error);
+      if (enabled && Notification.permission === "denied") {
+        toast.info(
+          "Push notifications are not enabled. Please enable them in your browser settings.",
+        );
+      } else {
+        toast.error("Something went wrong. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+  if (hasActivePushSubscription === undefined) return null;
+
+  return (
+    <>
+      {loading ? (
+        <Loader2 className="size-5 animate-spin" />
+      ) : (
+        <Button
+          size="icon"
+          variant="ghost"
+          disabled={loading}
+          title={
+            hasActivePushSubscription
+              ? "Disable push notifications"
+              : "Enable push notifications"
+          }
+          onClick={() =>
+            setPushNotificationsEnabled(!hasActivePushSubscription)
+          }
+        >
+          {hasActivePushSubscription ? (
+            <BellOff className="size-5" />
+          ) : (
+            <BellRing className="size-5" />
+          )}
+        </Button>
       )}
     </>
   );
