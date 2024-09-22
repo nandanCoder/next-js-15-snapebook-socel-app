@@ -59,17 +59,23 @@ export default function UserButton({ className }: UserButtonProps) {
             <DropdownMenuItem onClick={() => setTheme("system")}>
               <Monitor className="mr-2 size-4" />
               System default
-              {theme === "system" && <CheckIcon className="ml-2 size-4" />}
+              {theme === "system" && (
+                <CheckIcon className="ml-2 size-4 text-primary" />
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setTheme("Light")}>
               <Sun className="mr-2 size-4" />
               Light
-              {theme === "light" && <CheckIcon className="ml-2 size-4" />}
+              {theme === "light" && (
+                <CheckIcon className="ml-2 size-4 text-primary" />
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setTheme("dark")}>
               <Moon className="mr-2 size-4" />
               Dark
-              {theme === "dark" && <CheckIcon className="ml-2 size-4" />}
+              {theme === "dark" && (
+                <CheckIcon className="ml-2 size-4 text-primary" />
+              )}
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
